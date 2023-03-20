@@ -54,6 +54,7 @@ public class Html2DocxExporter {
     public void export(InputStream html, InputStream baseDocx, OutputStream os) throws ExportException {
         try {
             WordprocessingMLPackage wmlPackage = WordprocessingMLPackage.load(baseDocx);
+            preprocess(wmlPackage);
             export(html, os, wmlPackage);
         } catch (Docx4JException e) {
             log.error(EXPORT_ERROR_MSG, e);
@@ -71,6 +72,7 @@ public class Html2DocxExporter {
     public void export(String htmlString, InputStream baseDocx, OutputStream os) throws ExportException {
         try {
             WordprocessingMLPackage wmlPackage = WordprocessingMLPackage.load(baseDocx);
+            preprocess(wmlPackage);
             export(htmlString, os, wmlPackage);
         } catch (Exception e) {
             log.error(EXPORT_ERROR_MSG, e);
@@ -100,5 +102,10 @@ public class Html2DocxExporter {
         wordMLPackage.getMainDocumentPart().getContent().clear();
         wordMLPackage.getMainDocumentPart().getContent().addAll(result);
         wordMLPackage.save(os);
+    }
+
+    protected void preprocess(WordprocessingMLPackage wmlPackage) {
+        // do nothing here
+        // could be overwritten by subclass if you want to do something for the base docx
     }
 }
