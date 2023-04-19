@@ -9,15 +9,14 @@
     <version>${revision}</version>
 
     <properties>
-        <revision>1.0.11</revision>
+        <revision>1.0.13</revision>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <xhtml2word.version>1.0.11</xhtml2word.version>
-        <docx4j.version>11.4.9</docx4j.version>
         <slf4j.version>2.0.6</slf4j.version>
-        <lombok.verison>1.18.24</lombok.verison>
+        <lombok.verison>1.18.22</lombok.verison>
         <junit.version>5.9.2</junit.version>
+        <src.dir>src/main/java</src.dir>
     </properties>
 
     <name>html-export</name>
@@ -55,7 +54,7 @@
         <dependency>
             <groupId>io.github.longyg</groupId>
             <artifactId>docx4j-xhtml2word-core</artifactId>
-            <version>${xhtml2word.version}</version>
+            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -63,14 +62,10 @@
             <version>${slf4j.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.docx4j</groupId>
-            <artifactId>docx4j-core</artifactId>
-            <version>${docx4j.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.verison}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -80,10 +75,19 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <sourceDirectory>${src.dir}</sourceDirectory>
+    </build>
+
     <!-- build配置:使用profiles实现灵活启用和关闭build-->
     <profiles>
         <profile>
             <id>release</id>
+
+            <properties>
+                <src.dir>${project.build.directory}/generated-sources/delombok</src.dir>
+            </properties>
+
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
@@ -103,7 +107,7 @@
                         <configuration>
                             <serverId>oss</serverId>
                             <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
                         </configuration>
                     </plugin>
                     <!-- Source 源码打包 -->
@@ -116,6 +120,26 @@
                                 <phase>package</phase>
                                 <goals>
                                     <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- delombok -->
+                    <plugin>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok-maven-plugin</artifactId>
+                        <version>1.18.20.0</version>
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <sourceDirectory>src/main/java</sourceDirectory>
+                            <addOutputDirectory>false</addOutputDirectory>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>delombok</goal>
                                 </goals>
                             </execution>
                         </executions>
@@ -137,7 +161,6 @@
                         </configuration>
                         <executions>
                             <execution>
-                                <phase>compile</phase>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
