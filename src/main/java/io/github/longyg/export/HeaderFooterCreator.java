@@ -18,16 +18,28 @@ public class HeaderFooterCreator {
     private HeaderFooterCreator() {
     }
 
-    public static void createHeader(WordprocessingMLPackage wordMLPackage, List<Object> objects) throws InvalidFormatException {
-        Relationship part = createHeaderPart(wordMLPackage, objects);
-        HeaderReference headerReference = createHeaderReference(part);
+    public static void addHeaderPart(WordprocessingMLPackage wordMLPackage,
+                                     HeaderPart headerPart,
+                                     Relationship relationship,
+                                     List<Object> objects) {
+        Hdr hdr = Context.getWmlObjectFactory().createHdr();
+        hdr.getContent().addAll(objects);
+        headerPart.setJaxbElement(hdr);
+
+        HeaderReference headerReference = createHeaderReference(relationship);
         SectPr sectPr = getSectPr(wordMLPackage);
         sectPr.getEGHdrFtrReferences().add(headerReference);
     }
 
-    public static void createFooter(WordprocessingMLPackage wordMLPackage, List<Object> objects) throws InvalidFormatException {
-        Relationship part = createFooterPart(wordMLPackage, objects);
-        FooterReference footerReference = createFooterReference(part);
+    public static void addFooterPart(WordprocessingMLPackage wordMLPackage,
+                                     FooterPart footerPart,
+                                     Relationship relationship,
+                                     List<Object> objects) {
+        Ftr ftr = Context.getWmlObjectFactory().createFtr();
+        ftr.getContent().addAll(objects);
+        footerPart.setJaxbElement(ftr);
+
+        FooterReference footerReference = createFooterReference(relationship);
         SectPr sectPr = getSectPr(wordMLPackage);
         sectPr.getEGHdrFtrReferences().add(footerReference);
     }
@@ -57,29 +69,4 @@ public class HeaderFooterCreator {
         footerReference.setType(HdrFtrRef.DEFAULT);
         return footerReference;
     }
-
-    private static Relationship createHeaderPart(WordprocessingMLPackage wordprocessingMLPackage, List<Object> objects)
-            throws InvalidFormatException {
-        HeaderPart headerPart = new HeaderPart();
-        Relationship rel = wordprocessingMLPackage.getMainDocumentPart()
-                .addTargetPart(headerPart);
-
-        Hdr hdr = Context.getWmlObjectFactory().createHdr();
-        hdr.getContent().addAll(objects);
-        headerPart.setJaxbElement(hdr);
-        return rel;
-    }
-
-    private static Relationship createFooterPart(WordprocessingMLPackage wordMLPackage, List<Object> objects)
-            throws InvalidFormatException {
-        FooterPart footerPart = new FooterPart();
-        Relationship rel = wordMLPackage.getMainDocumentPart()
-                .addTargetPart(footerPart);
-
-        Ftr ftr = Context.getWmlObjectFactory().createFtr();
-        ftr.getContent().addAll(objects);
-        footerPart.setJaxbElement(ftr);
-        return rel;
-    }
-
 }

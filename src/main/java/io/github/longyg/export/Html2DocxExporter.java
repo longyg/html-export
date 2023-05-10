@@ -6,6 +6,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.docx4j.convert.in.xhtml.XHTMLImporterImpl;
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
+import org.docx4j.openpackaging.parts.Part;
+import org.docx4j.openpackaging.parts.WordprocessingML.FooterPart;
+import org.docx4j.openpackaging.parts.WordprocessingML.HeaderPart;
+import org.docx4j.relationships.Relationship;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -134,47 +138,61 @@ public class Html2DocxExporter {
 
     private void export(InputStream is, OutputStream os,
                         WordprocessingMLPackage wordMLPackage) throws Docx4JException {
-        XHTMLImporterImpl xhtmlImporter = getXHTMLImporterImpl(wordMLPackage);
+        XHTMLImporterImpl xhtmlImporter = getXHTMLImporter(wordMLPackage);
         saveResult(wordMLPackage, os, xhtmlImporter.convert(is, null));
     }
 
     private void export(String html, OutputStream os, WordprocessingMLPackage wordMLPackage) throws Docx4JException {
-        XHTMLImporterImpl xhtmlImporter = getXHTMLImporterImpl(wordMLPackage);
+        XHTMLImporterImpl xhtmlImporter = getXHTMLImporter(wordMLPackage);
         saveResult(wordMLPackage, os, xhtmlImporter.convert(html, null));
     }
 
-    private void export(String html, String header, String footer, OutputStream os, WordprocessingMLPackage wordMLPackage) throws Docx4JException {
+    private void export(String html, String header, String footer,
+                        OutputStream os, WordprocessingMLPackage wordMLPackage)
+            throws Docx4JException {
         // if there is header and footer to be generated, we need first clean the existing header and footer from word package if any
         if (!StringUtils.isEmpty(header) || !StringUtils.isEmpty(footer)) {
             HeaderFooterCleaner.clean(wordMLPackage);
         }
         if (!StringUtils.isEmpty(header)) {
             // convert header and save to word package
-            HeaderFooterCreator.createHeader(wordMLPackage, getXHTMLImporterImpl(wordMLPackage).convert(header, null));
+            HeaderPart headerPart = new HeaderPart();
+            Relationship relationship = wordMLPackage.getMainDocumentPart().addTargetPart(headerPart);
+            XHTMLImporterImpl importer = getXHTMLImporter(wordMLPackage, headerPart);
+            HeaderFooterCreator.addHeaderPart(wordMLPackage, headerPart, relationship, importer.convert(header, null));
         }
         if (!StringUtils.isEmpty(footer)) {
             // convert footer and save to word package
-            HeaderFooterCreator.createFooter(wordMLPackage, getXHTMLImporterImpl(wordMLPackage).convert(footer, null));
+            FooterPart footerPart = new FooterPart();
+            Relationship relationship = wordMLPackage.getMainDocumentPart().addTargetPart(footerPart);
+            XHTMLImporterImpl importer = getXHTMLImporter(wordMLPackage, footerPart);
+            HeaderFooterCreator.addFooterPart(wordMLPackage, footerPart, relationship, importer.convert(footer, null));
         }
 
         if (!StringUtils.isEmpty(html)) {
             // convert main html and save to word package
-            saveMainDocument(wordMLPackage, getXHTMLImporterImpl(wordMLPackage).convert(html, null));
+            addMainDocument(wordMLPackage, getXHTMLImporter(wordMLPackage).convert(html, null));
         }
 
         // save word package to output stream
         wordMLPackage.save(os);
     }
 
-    private void saveMainDocument(WordprocessingMLPackage wordMLPackage, List<Object> objects) {
+    private void addMainDocument(WordprocessingMLPackage wordMLPackage, List<Object> objects) {
         wordMLPackage.getMainDocumentPart().getContent().clear();
         wordMLPackage.getMainDocumentPart().getContent().addAll(objects);
     }
 
-    private XHTMLImporterImpl getXHTMLImporterImpl(WordprocessingMLPackage wordMLPackage) {
-        XHTMLImporterImpl xhtmlImporter = new XHTMLImporterImpl(wordMLPackage);
-        xhtmlImporter.setHyperlinkStyle(getHyperlinkStyleId());
-        return xhtmlImporter;
+    private XHTMLImporterImpl getXHTMLImporter(WordprocessingMLPackage wordMLPackage, Part sourcePart) {
+        XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage, sourcePart);
+        importer.setHyperlinkStyle(getHyperlinkStyleId());
+        return importer;
+    }
+
+    private XHTMLImporterImpl getXHTMLImporter(WordprocessingMLPackage wordMLPackage) {
+        XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
+        importer.setHyperlinkStyle(getHyperlinkStyleId());
+        return importer;
     }
 
     private static void saveResult(WordprocessingMLPackage wordMLPackage,
