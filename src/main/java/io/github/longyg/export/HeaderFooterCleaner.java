@@ -21,6 +21,11 @@ public class HeaderFooterCleaner {
     private HeaderFooterCleaner() {
     }
 
+    /**
+     * jay note test
+     * @param wordMLPackage
+     */
+
     public static void clean(WordprocessingMLPackage wordMLPackage) {
         if (null == wordMLPackage || null == wordMLPackage.getMainDocumentPart()) return;
 
